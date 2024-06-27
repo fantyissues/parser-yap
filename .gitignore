@@ -4,5 +4,8 @@ __pycache__/
 # Virtual env
 venv/
 
+# Requests cache
+http_cache.sqlite
+
 # Flake8 config
 .flake8
