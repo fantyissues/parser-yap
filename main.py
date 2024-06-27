@@ -5,6 +5,7 @@ import requests_cache
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
+from configs import configure_argument_parser
 from constants import BASE_DIR, ENCODING, MAIN_DOC_URL
 
 
@@ -81,3 +82,21 @@ def download():
     archive_path = download_dir / filename
     response = session.get(archive_url)
     archive_path.write_bytes(response.content)
+
+
+MODE_TO_FUNCTION = {
+    'whats-new': whats_new,
+    'latest-versions': latest_versions,
+    'download': download,
+}
+
+
+def main():
+    arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
+    args = arg_parser.parse_args()
+    parser_mode = args.mode
+    MODE_TO_FUNCTION[parser_mode]()
+
+
+if __name__ == '__main__':
+    main()
