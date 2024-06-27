@@ -1,0 +1,5 @@
+# Virtual env
+venv/
+
+# Flake8 config
+.flake8
