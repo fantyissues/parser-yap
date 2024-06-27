@@ -1,3 +1,6 @@
+# Bite-compiled
+__pycache__/
+
 # Virtual env
 venv/
 
