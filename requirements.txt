@@ -6,6 +6,7 @@ charset-normalizer==3.3.2
 idna==3.7
 lxml==5.2.2
 platformdirs==4.2.2
+prettytable==3.10.0
 requests==2.32.3
 requests-cache==1.2.1
 six==1.16.0
