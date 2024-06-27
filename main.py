@@ -1,0 +1,83 @@
+import re
+from urllib.parse import urljoin
+
+import requests_cache
+from bs4 import BeautifulSoup
+from tqdm import tqdm
+
+from constants import BASE_DIR, ENCODING, MAIN_DOC_URL
+
+
+def whats_new():
+    whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
+    session = requests_cache.CachedSession()
+    response = session.get(whats_new_url)
+    response.encoding = ENCODING
+    soup = BeautifulSoup(response.text, features='lxml')
+    main_section = soup.find('section', {'id': 'what-s-new-in-python'})
+    div_with_ul = main_section.find('div', {'class': 'toctree-wrapper'})
+    sections_by_python = div_with_ul.find_all('li', {'class': 'toctree-l1'})
+
+    results = []
+    for section in tqdm(sections_by_python):
+        version_link = urljoin(whats_new_url, section.find('a')['href'])
+        response = session.get(version_link)
+        response.encoding = ENCODING
+        soup = BeautifulSoup(response.text, features='lxml')
+        h1 = soup.find('h1')
+        dl = soup.find('dl')
+        dl_text = dl.text.replace('\n', ' ')
+        results.append((version_link, h1.text, dl_text))
+
+    for row in results:
+        print(*row)
+
+
+def latest_versions():
+    session = requests_cache.CachedSession()
+    response = session.get(MAIN_DOC_URL)
+    response.encoding = ENCODING
+    soup = BeautifulSoup(response.text, features='lxml')
+    sidebar = soup.find('div', {'class': 'sphinxsidebarwrapper'})
+    ul_tags = sidebar.find_all('ul')
+
+    for ul in ul_tags:
+        if 'All versions' in ul.text:
+            a_tags = ul.find_all('a')
+            break
+    else:
+        raise Exception('Ничего не нашлось')
+
+    results = []
+    pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
+    for a_tag in a_tags:
+        link = a_tag['href']
+        text_match = re.search(pattern, a_tag.text)
+        if text_match:
+            version, status = text_match.groups()
+        else:
+            version, status = a_tag.text, ''
+        results.append((link, version, status))
+
+    for row in results:
+        print(*row)
+
+
+def download():
+    downloads_url = urljoin(MAIN_DOC_URL, 'download.html')
+    session = requests_cache.CachedSession()
+    response = session.get(downloads_url)
+    response.encoding = ENCODING
+    soup = BeautifulSoup(response.text, features='lxml')
+    div_with_table = soup.find('div', {'role': 'main'})
+    table = div_with_table.find('table', {'class': 'docutils'})
+    archive_url = urljoin(
+        downloads_url,
+        table.find('a', {'href': re.compile(r'.+pdf-a4\.zip$')})['href']
+    )
+    filename = archive_url.split('/')[-1]
+    download_dir = BASE_DIR / 'downloads'
+    download_dir.mkdir(exist_ok=True)
+    archive_path = download_dir / filename
+    response = session.get(archive_url)
+    archive_path.write_bytes(response.content)
