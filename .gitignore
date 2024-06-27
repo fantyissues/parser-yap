@@ -9,3 +9,6 @@ http_cache.sqlite
 
 # Flake8 config
 .flake8
+
+# Downloaded files
+downloads/
