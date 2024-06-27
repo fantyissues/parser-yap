@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from configs import configure_argument_parser
 from constants import BASE_DIR, ENCODING, MAIN_DOC_URL
+from outputs import control_output
 
 
 def whats_new(session):
@@ -18,7 +19,7 @@ def whats_new(session):
     div_with_ul = main_section.find('div', {'class': 'toctree-wrapper'})
     sections_by_python = div_with_ul.find_all('li', {'class': 'toctree-l1'})
 
-    results = []
+    results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
     for section in tqdm(sections_by_python):
         version_link = urljoin(whats_new_url, section.find('a')['href'])
         response = session.get(version_link)
@@ -29,8 +30,7 @@ def whats_new(session):
         dl_text = dl.text.replace('\n', ' ')
         results.append((version_link, h1.text, dl_text))
 
-    for row in results:
-        print(*row)
+    return results
 
 
 def latest_versions(session):
@@ -47,7 +47,7 @@ def latest_versions(session):
     else:
         raise Exception('Ничего не нашлось')
 
-    results = []
+    results = [('Ссылка на документацию', 'Версия', 'Статус')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
     for a_tag in a_tags:
         link = a_tag['href']
@@ -58,8 +58,7 @@ def latest_versions(session):
             version, status = a_tag.text, ''
         results.append((link, version, status))
 
-    for row in results:
-        print(*row)
+    return results
 
 
 def download(session):
@@ -95,7 +94,9 @@ def main():
     if args.clear_cache:
         session.cache.clear()
     parser_mode = args.mode
-    MODE_TO_FUNCTION[parser_mode](session)
+    results = MODE_TO_FUNCTION[parser_mode](session)
+    if results is not None:
+        control_output(results, args)
 
 
 if __name__ == '__main__':
