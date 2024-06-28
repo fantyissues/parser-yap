@@ -13,3 +13,4 @@ http_cache.sqlite
 # Results files
 downloads/
 results/
+logs/
